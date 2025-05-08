@@ -1,0 +1,20 @@
+apiVersion: maestro/v1alpha1
+kind: Workflow
+metadata:
+  name: cbom.ai_demo
+  labels:
+    app: cbom.ai
+spec:
+  template:
+    metadata:
+      labels:
+        app: cbom.ai_demo_workflow
+    agents:
+      - cbom_finder
+    prompt: | 
+      The repo to use in my workflow is https://github.com/Mastercard/client-encryption-java
+    steps:
+      - name: begin
+        agent: tool_checker
+      - name: step2
+        agent: cbom_finder

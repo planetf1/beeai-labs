@@ -1,0 +1,41 @@
+apiVersion: maestro/v1alpha1
+kind: Agent
+metadata:
+  name: cbom_finder
+  labels:
+    app: cbom.ai
+spec:
+  model: "gpt-4o-mini"
+  description: cbom finder
+  instructions: |
+    You have access to a variety Cryptographic Bill of Materials (CBOMs) at https://github.com/planetf1/cbom-repo.git
+    Look through the files in this repository for a CBOM that matches the repository you are asked to analyze.
+    The filename may not be a direct match for the repo name, so you should gather the filelist first and Look
+    for the best match
+    Emit the content with that JSON CBOM file as your output. This should be valid JSON, nothing else.
+    Use 'search_code' to look for files in a repository (or across repositories)
+    Use 'tavily-search' for general web searching
+    Do not try and look in pull requests and issues, just look at the code
+  framework: openai
+  mode: local
+  tools:
+    web-search
+---
+apiVersion: maestro/v1alpha1
+kind: Agent
+metadata:
+  name: tool_checker
+  labels:
+    app: cbom.ai
+spec:
+  model: "gpt-4o-mini"
+  description: tool checker
+  instructions: |
+    You aid in debugging. You should report the names of all the tools that you have access to, 
+    and provide a brief summary of each. Within this output, prefix each line with 'DEBUG: '
+    You must not actually
+    call any tools, nor should you use anything else you are provided in your prompt.
+
+    Additionally as output you should then ust echo your input. this should not be prefixed with 'DEBUG:'
+  framework: openai
+  mode: local
