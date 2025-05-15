@@ -1,0 +1,20 @@
+apiVersion: maestro/v1alpha1
+kind: Workflow
+metadata:
+  name: openai_test_mcp_ollama
+  labels:
+    app: testapp_mcp_ollama
+spec:
+  template:
+    metadata:
+      labels:
+        app: testapp_mcp_ollama
+    agents:
+      - openai_test_ollama
+    prompt: | 
+      Tell me about my identity on github. Use the tools you have
+      to retrieve detailed information from my github profile 'planetf1'. For example you could list how many followers I have, what activity I've been doing recently.
+      You could use the 'search_user' tool
+    steps:
+      - name: begin
+        agent: openai_test_mcp_ollama
