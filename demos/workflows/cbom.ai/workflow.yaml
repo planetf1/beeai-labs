@@ -10,11 +10,23 @@ spec:
       labels:
         app: cbom.ai_demo_workflow
     agents:
-      - cbom_finder
+      - cbom_finder_stub
+      - cbom_plan_stub
+      - cbom_fixer_stub
+      - cbom_pr_stub
     prompt: | 
       The repo to use in my workflow is https://github.com/Mastercard/client-encryption-java
     steps:
       - name: begin
-        agent: tool_checker
-      - name: step2
-        agent: cbom_finder
+        agent: cbom_finder_stub
+        #condition:
+        #  if (input.find "cryptographic-asset" ):
+        #    then: identify_changes
+      #- name: build_cbom
+      #  agent: cbom_builder_stub
+      - name: identify_changes
+        agent: cbom_plan_stub
+      - name: fix_code
+        agent: cbom_fixer_stub
+      - name: generate_pr
+        agent: cbom_pr_stub

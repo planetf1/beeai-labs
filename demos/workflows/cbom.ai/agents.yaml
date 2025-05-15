@@ -5,17 +5,22 @@ metadata:
   labels:
     app: cbom.ai
 spec:
-  model: "gpt-4o-mini"
+  #model: openai/rits/meta-llama/llama-3-3-70b-instruct
+  model: qwen3:8b
   description: cbom finder
   instructions: |
-    You have access to a variety Cryptographic Bill of Materials (CBOMs) at https://github.com/planetf1/cbom-repo.git
-    Look through the files in this repository for a CBOM that matches the repository you are asked to analyze.
-    The filename may not be a direct match for the repo name, so you should gather the filelist first and Look
-    for the best match
-    Emit the content with that JSON CBOM file as your output. This should be valid JSON, nothing else.
-    Use 'search_code' to look for files in a repository (or across repositories)
-    Use 'tavily-search' for general web searching
+    You will be supplied with a reference to a github repository.
+    You need to locate a Cryptographic Bill of Materials (CBOM) for this code.
+    This can be achieved by: (* is wildcard)
+      - Identifying the correct github repository for the code requested
+      - look in the repo https://github.com/planetf1/cbom-repo.git for a suitable cbom
+    Emit the content with the content of that JSON CBOM file as your output. This should be valid JSON, nothing else.
     Do not try and look in pull requests and issues, just look at the code
+    If a tool fails, check the error, think again, and retry as needed
+      Remember these important rules:
+      - You are an agent - please keep going until the user’s query is completely resolved, before ending your turn and yielding back to the user. Only terminate your turn when you are sure that the problem is solved.
+      - If you are not sure about file content or codebase structure pertaining to the user’s request, use your tools to read files and gather the relevant information: do NOT guess or make up an answer.
+      - You MUST plan extensively before each function call, and reflect extensively on the outcomes of the previous function calls. DO NOT do this entire process by making function calls only, as this can impair your ability to solve the problem and think insightfully.
   framework: openai
   mode: local
   tools:
@@ -28,7 +33,8 @@ metadata:
   labels:
     app: cbom.ai
 spec:
-  model: "gpt-4o-mini"
+  #model: openai/rits/meta-llama/llama-3-3-70b-instruct
+  model: qwen3:8b
   description: tool checker
   instructions: |
     You aid in debugging. You should report the names of all the tools that you have access to, 
@@ -36,6 +42,189 @@ spec:
     You must not actually
     call any tools, nor should you use anything else you are provided in your prompt.
 
-    Additionally as output you should then ust echo your input. this should not be prefixed with 'DEBUG:'
+    Additionally as output you should then just echo your input. this should not be prefixed with 'DEBUG:'
+
+    Remember these important rules:
+      - You are an agent - please keep going until the user’s query is completely resolved, before ending your turn and yielding back to the user. Only terminate your turn when you are sure that the problem is solved.
+      - If you are not sure about file content or codebase structure pertaining to the user’s request, use your tools to read files and gather the relevant information: do NOT guess or make up an answer.
+      - You MUST plan extensively before each function call, and reflect extensively on the outcomes of the previous function calls. DO NOT do this entire process by making function calls only, as this can impair your ability to solve the problem and think insightfully.
+  framework: openai
+  mode: local
+---
+apiVersion: maestro/v1alpha1
+kind: Agent
+metadata:
+  name: repoinfo
+  labels:
+    app: cbom.ai
+spec:
+  #model: openai/rits/meta-llama/llama-3-3-70b-instruct
+  model: qwen3:8b
+  description: repo info
+  instructions: |
+    Give me some general information about the repository mentioned - for example
+    - how active is the repository?
+    - how many stars does it have?
+    - what does the code there purport to do?
+    - who are the maintainers?
+    - what language is it written in
+    Feel free to add other useful information
+    DO NOT look at pull requests or issue details.
+    Keep the output fairly concise
+    Remember these important rules:
+      - You are an agent - please keep going until the user’s query is completely resolved, before ending your turn and yielding back to the user. Only terminate your turn when you are sure that the problem is solved.
+      - If you are not sure about file content or codebase structure pertaining to the user’s request, use your tools to read files and gather the relevant information: do NOT guess or make up an answer.
+      - You MUST plan extensively before each function call, and reflect extensively on the outcomes of the previous function calls. DO NOT do this entire process by making function calls only, as this can impair your ability to solve the problem and think insightfully.
+      - you should check the name of the tool you are going to use carefully against what is available
+  framework: openai
+  mode: local
+---
+apiVersion: maestro/v1alpha1
+kind: Agent
+metadata:
+  name: getme
+  labels:
+    app: cbom.ai
+spec:
+  #model: openai/rits/Qwen/Qwen2.5-72B-Instruct
+  model: qwen3:8b
+  description: me info
+  instructions: |
+    Tell me about me, the authenticated user on github
+    Keep the output fairly concise
+    Remember these important rules:
+      - You are an agent - please keep going until the user’s query is completely resolved, before ending your turn and yielding back to the user. Only terminate your turn when you are sure that the problem is solved.
+      - If you are not sure about file content or codebase structure pertaining to the user’s request, use your tools to read files and gather the relevant information: do NOT guess or make up an answer.
+      - You MUST plan extensively before each function call, and reflect extensively on the outcomes of the previous function calls. DO NOT do this entire process by making function calls only, as this can impair your ability to solve the problem and think insightfully.
+      - you should check the name of the tool you are going to use carefully against what is available
+  framework: openai
+  mode: local
+---
+apiVersion: maestro/v1alpha1
+kind: Agent
+metadata:
+  name: get_cbom
+  labels:
+    app: cbom.ai
+spec:
+  #model: openai/rits/Qwen/Qwen2.5-72B-Instruct
+  model: qwen3:8b
+  description: me info
+  instructions: |
+    Given the repository being discussed, 
+    Remember these important rules:
+      - You are an agent - please keep going until the user’s query is completely resolved, before ending your turn and yielding back to the user. Only terminate your turn when you are sure that the problem is solved.
+      - If you are not sure about file content or codebase structure pertaining to the user’s request, use your tools to read files and gather the relevant information: do NOT guess or make up an answer.
+      - You MUST plan extensively before each function call, and reflect extensively on the outcomes of the previous function calls. DO NOT do this entire process by making function calls only, as this can impair your ability to solve the problem and think insightfully.
+      - you should check the name of the tool you are going to use carefully against what is available
+  framework: openai
+  mode: local
+---
+apiVersion: maestro/v1alpha1
+kind: Agent
+metadata:
+  name: cbom_finder_stub
+  labels:
+    app: cbom.ai
+spec:
+  #model: openai/rits/Qwen/Qwen2.5-72B-Instruct
+  model: qwen3:8b
+  description: Stub to find a cbom
+  instructions: |
+    Echo the raw contents of https://raw.githubusercontent.com/planetf1/cbom-repo/refs/heads/main/cboms/cbomkit/Mastercard-client-encryption-java.cbom in JSON. Do not add anything.
+  framework: openai
+  mode: local
+---
+apiVersion: maestro/v1alpha1
+kind: Agent
+metadata:
+  name: cbom_plan_stub
+  labels:
+    app: cbom.ai
+spec:
+  #model: openai/rits/Qwen/Qwen2.5-72B-Instruct
+  model: qwen3:8b
+  description: Stub to decide what code changes to make
+  instructions: |
+    Echo the following in JSON. Do not add anything.
+    {
+      "repository": "https://github.com/planetf1/client-encryption-java",
+      "findings": [
+        {
+          "algorithm": "AES128-CBC-PKCS5",
+          "remediation": "KEYLEN01",
+          "filename": "src/main/java/com/mastercard/developer/encryption/aes/AESCBC.java",
+          "URL": "https://raw.githubusercontent.com/planetf1/client-encryption-java/main/src/main/java/com/mastercard/developer/encryption/aes/AESCBC.java",
+          "linenumber": 31
+        },
+        {
+          "algorithm": "AES128",
+          "remediation": "KEYLEN01",
+          "filename": "src/main/java/com/mastercard/developer/encryption/aes/AESEncryption.java",
+          "URL": "https://raw.githubusercontent.com/planetf1/client-encryption-java/main/src/main/java/com/mastercard/developer/encryption/aes/AESEncryption.java",
+          "linenumber": 32
+        },
+        {
+          "algorithm": "AES128-GCM",
+          "remediation": "KEYLEN01",
+          "filename": "src/main/java/com/mastercard/developer/encryption/aes/AESGCM.java",
+          "URL": "https://raw.githubusercontent.com/planetf1/client-encryption-java/main/src/main/java/com/mastercard/developer/encryption/aes/AESGCM.java",
+          "linenumber": 29
+        }
+      ]
+    }
+  framework: openai
+  mode: local
+---
+apiVersion: maestro/v1alpha1
+kind: Agent
+metadata:
+  name: cbom_fixer_stub
+  labels:
+    app: cbom.ai
+spec:
+  #model: openai/rits/Qwen/Qwen2.5-72B-Instruct
+  model: qwen3:8b
+  description: Stub to propose a fix
+  instructions: |
+    Echo the raw contents below in JSON. Do not add anything.
+    From 94abe5f3b19d11a4d538ef629467a89392e50d2c Mon Sep 17 00:00:00 2001
+    From: patcher <patcher@research.ibm.com>
+    Date: Mon, 2 Dec 2024 11:46:35 +0000
+    Subject: [PATCH] Bee patched!
+    ---
+    .../java/com/mastercard/developer/encryption/aes/AESGCM.java    | 2 +-
+    1 file changed, 1 insertion(+), 1 deletion(-)
+    diff --git a/src/main/java/com/mastercard/developer/encryption/aes/AESGCM.java b/src/main/java/com/mastercard/developer/encryption/aes/AESGCM.java
+    index 31cb738..bc98c36 100644
+    --- a/src/main/java/com/mastercard/developer/encryption/aes/AESGCM.java
+    +++ b/src/main/java/com/mastercard/developer/encryption/aes/AESGCM.java
+    @@ -20,7 +20,7 @@ public class AESGCM {
+    public static byte[] decrypt(Key cek, JweObject object) throws GeneralSecurityException {
+      byte[] aad = object.getRawHeader().getBytes(StandardCharsets.US_ASCII);
+    - GCMParameterSpec gcmSpec = new GCMParameterSpec(128, EncodingUtils.base64Decode(object.getIv()));
+    + GCMParameterSpec gcmSpec = new GCMParameterSpec(256, EncodingUtils.base64Decode(object.getIv()));
+      byte[] bytes = ByteUtils.concat(EncodingUtils.base64Decode(object.getCipherText()), EncodingUtils.base64Decode(object.getAuthTag()));
+      return cipher(cek, gcmSpec, bytes, aad, Cipher.DECRYPT_MODE);
+    }
+    --
+    2.45.2
+
+  framework: openai
+  mode: local
+---
+apiVersion: maestro/v1alpha1
+kind: Agent
+metadata:
+  name: cbom_pr_stub
+  labels:
+    app: cbom.ai
+spec:
+  #model: openai/rits/Qwen/Qwen2.5-72B-Instruct
+  model: qwen3:8b
+  description: Stub to create a PR
+  instructions: |
+    Echo the following key/values as JSON. Do not add anything.
+    {"status": "success", "pr": "https://github.com/myorg/myrepo/issues/76"}
   framework: openai
   mode: local
